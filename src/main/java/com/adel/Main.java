@@ -2,7 +2,7 @@ package com.adel;
 
 public class Main {
     public static void main(String[] args) {
-        final String testData = "I can write this message. You can read this message.";
+        final String testData = "I can write this message.You can read this message.";
 
         final long time = System.currentTimeMillis();
 

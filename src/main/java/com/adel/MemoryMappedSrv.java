@@ -19,10 +19,13 @@ public class MemoryMappedSrv implements AutoCloseable {
     private final ExecutorService executors;
     private final List<CompletableFuture<Void>> completableFutures;
 
+    private final int nThreads;
+
     //Create memory-mapped file
     public MemoryMappedSrv() {
 
-        executors = Executors.newFixedThreadPool(2);
+        nThreads = Runtime.getRuntime().availableProcessors();
+        executors = Executors.newFixedThreadPool(nThreads);
         completableFutures = new ArrayList<>();
 
         try {
@@ -57,13 +60,16 @@ public class MemoryMappedSrv implements AutoCloseable {
     }
 
     public void quickWrite(final String data) {
-        final int leftIndex = 0;
-        final int rightIndex = data.length() - 1;
-        final int midIndex = leftIndex + (rightIndex - leftIndex) / 2;
-        final String strSplit0 = data.substring(leftIndex, midIndex);
-        final String strSplit1 = data.substring(midIndex, rightIndex);
-        writeAsync(strSplit0, leftIndex, midIndex-leftIndex);
-        writeAsync(strSplit1, midIndex, rightIndex-midIndex);
+        int leftIndex = 0;
+        int rightIndex = data.length() - 1;
+
+        final int splitSize = leftIndex + (rightIndex - leftIndex) / nThreads;
+        while (data.length() != rightIndex) {
+            rightIndex = Math.min(leftIndex + splitSize + 1, data.length());
+            final String strSplit = data.substring(leftIndex, rightIndex);
+            writeAsync(strSplit, leftIndex, rightIndex);
+            leftIndex += splitSize;
+        }
     }
 
     public String readAll() {
