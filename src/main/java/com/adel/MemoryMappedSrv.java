@@ -75,6 +75,10 @@ public class MemoryMappedSrv implements AutoCloseable {
         completableFutures.clear();
     }
 
+    public void clear(){
+        buffer.clear();
+    }
+
     private void writeC(final char character, final int position) {
         buffer.put(position, (byte) character);
     }
