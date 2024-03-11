@@ -12,10 +12,13 @@ public class Main {
             ins.writeAsync(testData, 0, testData.length());
             ins.writeAsync(testData2, (testData.length()+1), testData2.length());
 
+            ins.waitAllAsync();
+            System.out.println(ins.readAll());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         System.out.println("process time: " + (System.currentTimeMillis() - time));
+        System.exit(0);
     }
 }

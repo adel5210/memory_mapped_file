@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -14,11 +17,13 @@ public class MemoryMappedSrv implements AutoCloseable {
     private final FileChannel fileChannel;
     private final MappedByteBuffer buffer;
     private final ExecutorService executors;
+    private final List<CompletableFuture<Void>> completableFutures;
 
     //Create memory-mapped file
     public MemoryMappedSrv() {
 
         executors = Executors.newFixedThreadPool(2);
+        completableFutures = new ArrayList<>();
 
         try {
             file = new RandomAccessFile("mmf.dat", "rw");
@@ -47,7 +52,8 @@ public class MemoryMappedSrv implements AutoCloseable {
     }
 
     public void writeAsync(final String data, final int offset, final int length) {
-        CompletableFuture.runAsync(() -> write(data, offset, length), executors);
+        final CompletableFuture<Void> runAsync = CompletableFuture.runAsync(() -> write(data, offset, length), executors);
+        completableFutures.add(runAsync);
     }
 
     public String readAll() {
@@ -56,6 +62,17 @@ public class MemoryMappedSrv implements AutoCloseable {
             sb.append(readC(i));
         }
         return sb.toString();
+    }
+
+    public void waitAllAsync(){
+        completableFutures.forEach(cf -> {
+            try {
+                cf.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        completableFutures.clear();
     }
 
     private void writeC(final char character, final int position) {
