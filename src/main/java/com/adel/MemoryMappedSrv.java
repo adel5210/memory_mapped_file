@@ -56,6 +56,16 @@ public class MemoryMappedSrv implements AutoCloseable {
         completableFutures.add(runAsync);
     }
 
+    public void quickWrite(final String data) {
+        final int leftIndex = 0;
+        final int rightIndex = data.length() - 1;
+        final int midIndex = leftIndex + (rightIndex - leftIndex) / 2;
+        final String strSplit0 = data.substring(leftIndex, midIndex);
+        final String strSplit1 = data.substring(midIndex, rightIndex);
+        writeAsync(strSplit0, leftIndex, midIndex-leftIndex);
+        writeAsync(strSplit1, midIndex, rightIndex-midIndex);
+    }
+
     public String readAll() {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 1024; i++) {
@@ -64,7 +74,7 @@ public class MemoryMappedSrv implements AutoCloseable {
         return sb.toString();
     }
 
-    public void waitAllAsync(){
+    public void waitAllAsync() {
         completableFutures.forEach(cf -> {
             try {
                 cf.get();
@@ -75,7 +85,7 @@ public class MemoryMappedSrv implements AutoCloseable {
         completableFutures.clear();
     }
 
-    public void clear(){
+    public void clear() {
         buffer.clear();
     }
 
